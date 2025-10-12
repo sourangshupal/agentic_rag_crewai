@@ -7,16 +7,8 @@ import time
 
 from crewai import Agent, Crew, Process, Task, LLM
 from src.agentic_rag.tools.custom_tool import DocumentSearchTool
-from crewai_tools import FirecrawlSearchTool
-from crewai_tools import SerperDevTool 
+from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
-
-# Try importing FirecrawlApp at the module level
-try:
-    from firecrawl import FirecrawlApp
-    FIRECRAWL_AVAILABLE = True
-except ImportError:
-    FIRECRAWL_AVAILABLE = False
 
 load_dotenv()
 
@@ -33,37 +25,8 @@ def load_llm():
 # ===========================
 def create_agents_and_tasks(pdf_tool):
     """Creates a Crew with the given PDF tool (if any) and a web search tool."""
-    api_key = os.getenv("FIRECRAWL_API_KEY")
-    if not api_key:
-        raise ValueError("FIRECRAWL_API_KEY not found in environment variables")
-    
-    # Check if Firecrawl is available before creating the tool
-    if not FIRECRAWL_AVAILABLE:
-        import subprocess
-        try:
-            subprocess.run(["pip", "install", "firecrawl-py"], check=True)
-            from firecrawl import FirecrawlApp
-        except subprocess.CalledProcessError:
-            print("Firecrawl installation failed.")
-            raise ImportError("Failed to install firecrawl-py package. Please install it manually using 'pip install firecrawl-py'")
-        finally:
-            print(f"FIRECRAWL_AVAILABLE after install attempt: {FIRECRAWL_AVAILABLE}")
-
-    web_search_tool = None  # Define it outside the try block
-    try:
-        from firecrawl import FirecrawlApp
-        print(f"FirecrawlApp after install attempt: {FirecrawlApp}")
-        web_search_tool = FirecrawlSearchTool(
-            api_key=api_key,
-            params={
-                "num_results": 5,  # Optional: number of results to return
-                "include_domains": [],  # Optional: specific domains to search
-                "exclude_domains": []  # Optional: domains to exclude
-            }
-        )
-    except (NameError, ImportError) as e:
-        print(f"FirecrawlApp is not defined or Firecrawl installation failed: {e}")
-        web_search_tool = None  # Or some other fallback
+    # Initialize SerperDevTool for web search
+    web_search_tool = SerperDevTool()
 
     retriever_agent = Agent(
         role="Retrieve relevant information to answer the user query: {query}",
